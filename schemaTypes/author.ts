@@ -1,50 +1,61 @@
-import {defineField, defineType} from 'sanity'
+import { defineArrayMember, defineField, defineType } from "sanity";
 
-export default defineType({
-  name: 'author',
-  title: 'Author',
-  type: 'document',
+export const author = defineType({
+  name: "author",
+  title: "Author",
+  type: "document",
   fields: [
     defineField({
-      name: 'name',
-      title: 'Name',
-      type: 'string',
+      name: "name",
+      title: "Name",
+      type: "string",
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
-      options: {
-        source: 'name',
-        maxLength: 96,
-      },
+      name: "slug",
+      title: "Slug",
+      type: "slug",
+      options: { source: "name" },
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'image',
-      title: 'Image',
-      type: 'image',
-      options: {
-        hotspot: true,
-      },
+      name: "role",
+      title: "Role",
+      type: "string",
+      description: 'Example: "Software Developer & Entrepreneur"',
     }),
     defineField({
-      name: 'bio',
-      title: 'Bio',
-      type: 'array',
-      of: [
-        {
-          title: 'Block',
-          type: 'block',
-          styles: [{title: 'Normal', value: 'normal'}],
-          lists: [],
-        },
+      name: "bio",
+      title: "Bio",
+      type: "text",
+      rows: 4,
+    }),
+    defineField({
+      name: "image",
+      title: "Profile Image",
+      type: "image",
+      options: { hotspot: true },
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          validation: (Rule) => Rule.required(),
+        }),
       ],
+    }),
+    defineField({
+      name: "socialLinks",
+      title: "Social Links",
+      type: "array",
+      of: [defineArrayMember({ type: "socialLink" })],
     }),
   ],
   preview: {
     select: {
-      title: 'name',
-      media: 'image',
+      title: "name",
+      subtitle: "role",
+      media: "image",
     },
   },
-})
+});
