@@ -1,40 +1,44 @@
 import {defineField, defineType} from 'sanity'
 
 export const contacts = defineType({
-  name: 'contacts',
-  title: 'Contacts',
+  name: 'contact',
+  title: 'Contact Submission',
   type: 'document',
 
+  initialValue: () => ({
+    createdAt: new Date().toISOString(),
+  }),
+
   fields: [
-    defineField({
-      name: 'title',
-      title: 'Titele',
+    {
+      name: 'name',
+      title: 'Name',
       type: 'string',
-    }),
-
-    defineField({
-      name: 'fullname',
-      title: 'Full Name',
-      type: 'string',
-    }),
-
-    defineField({
+      validation: (Rule: any) => Rule.required().min(2).max(100),
+    },
+    {
       name: 'email',
       title: 'Email',
       type: 'string',
-    }),
-
-    defineField({
-      name: 'number',
-      title: 'Number',
+      validation: (Rule: any) => Rule.required().email(),
+    },
+    {
+      name: 'subject',
+      title: 'Subject',
+      type: 'string',
+      validation: (Rule: any) => Rule.max(200),
+    },
+    {
+      name: 'message',
+      title: 'Message',
       type: 'text',
-    }),
-    defineField({
-      name: 'createat',
-      title: 'Create At',
+      validation: (Rule: any) => Rule.required().min(10).max(5000),
+    },
+    {
+      name: 'createdAt',
+      title: 'Created At',
       type: 'datetime',
       readOnly: true,
-      initialValue: () => new Date().toISOString(),
-    }),
+    },
   ],
 })
