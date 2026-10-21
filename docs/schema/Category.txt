@@ -1,0 +1,67 @@
+# Model: Category (document)
+
+## Purpose
+
+Post taxonomy category (`_type == "category"`). Preview: title / slug / image.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| title | string | yes | — | UNKNOWN | Category title |
+| slug | slug (source: title) | yes | — | UNKNOWN | URL slug |
+| description | text (rows 3) | no | — | UNKNOWN | Category description |
+| image | image (hotspot) + alt (string) | no | — | UNKNOWN | Cover image; no caption field |
+| seo | seo (object) | no | — | UNKNOWN | Category archive SEO |
+
+## Relations
+
+- Referenced by: `post.category` (many posts : one category).
+- Embeds `seo` object.
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "category",
+  "title": "Backend",
+  "slug": {"_type": "slug", "current": "backend"},
+  "description": "...",
+  "image": {"asset": {"_ref": "image-..."}, "alt": "..."},
+  "seo": {"metaTitle": "..."}
+}
+```
+
+## Response Shape
+
+- `GET_CATEGORIES` (ordered `title asc`):
+  ```json
+  {
+    "_id": "...", "title": "...", "slug": "...",
+    "description": "...",
+    "image": {"asset": {"url": "...", "metadata": {...}}, "alt": "..."},
+    "postCount": 5
+  }
+  ```
+  (query projects `image.caption` — absent in schema, harmless).
+- `GET_POSTS` / `GET_FEATURED_POSTS` / `GET_POST_BY_SLUG` project
+  `category-> { title, "slug": slug.current }`.
+
+## API / Service Usage
+
+`GET_CATEGORIES`, `GET_POSTS_BY_CATEGORY` (param `$categorySlug` — matches
+`category->slug.current`). structure.ts: "Categories" under Taxonomy.
+
+## Enums
+
+None.
+
+## Validation Rules
+
+- Required: title, slug.
+
+## Notes
+
+- `postCount` is computed in GROQ (`count(*[_type == "post" && references(^._id)])`),
+  not stored on the document.
+- Category `seo` is never projected by any query.

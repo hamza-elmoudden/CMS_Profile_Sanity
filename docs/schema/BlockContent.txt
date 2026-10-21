@@ -1,0 +1,47 @@
+# Model: BlockContent (legacy array type — NOT registered)
+
+## Purpose
+
+Legacy/alternate rich-text definition (default Sanity blog template style).
+**Not imported or registered in `schemaTypes/index.ts`** — nothing in the
+schema references `blockContent`. The active rich text is
+`portableText.ts` (`bodyField` / `portableText`).
+
+## Fields
+
+Array `of` members:
+- block: styles normal · h1 · h2 · h3 · h4 · blockquote; lists bullet only;
+  decorators strong · em; annotation `link` {href (url)}.
+- image (hotspot), no custom fields.
+
+## Relations
+
+None.
+
+## Input / Request Shape
+
+Same portable-text array shape as PortableText.txt but without numbered lists,
+code blocks, or inline images.
+
+## Response Shape
+
+Not queryable — no GROQ query references `_type == "blockContent"`.
+
+## API / Service Usage
+
+None. Not in queries.ts; not in structure.ts.
+
+## Enums
+
+Block styles: normal · h1 · h2 · h3 · h4 · blockquote. Lists: bullet.
+Decorators: strong · em.
+
+## Validation Rules
+
+Link annotation href: type url (no explicit scheme restriction).
+
+## Notes
+
+- Default export (`export default defineType`); still compiled by tsc.
+- Registered neither as a type nor used as a field anywhere — safe to delete
+  unless kept intentionally as a reference.

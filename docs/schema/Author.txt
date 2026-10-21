@@ -1,0 +1,59 @@
+# Model: Author (document)
+
+## Purpose
+
+Blog author (`_type == "author"`). Preview: name / role / image.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| name | string | yes | — | UNKNOWN | Author name |
+| slug | slug (source: name) | yes | — | UNKNOWN | URL slug |
+| role | string | no | — | UNKNOWN | e.g. "Software Developer & Entrepreneur" |
+| bio | text (rows 4) | no | — | UNKNOWN | Author bio |
+| image | image (hotspot) + alt (string, required) | no | — | UNKNOWN | Profile photo; no caption |
+| socialLinks | array of socialLink | no | — | UNKNOWN | Author's social links |
+
+## Relations
+
+- Referenced by: `post.author` (required reference).
+- Embeds `socialLink[]` objects.
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "author",
+  "name": "Hamza Elmouddane",
+  "slug": {"_type": "slug", "current": "hamza-elmouddane"},
+  "role": "...",
+  "bio": "...",
+  "image": {"asset": {"_ref": "image-..."}, "alt": "..."},
+  "socialLinks": [{"platform": "github", "url": "https://..."}]
+}
+```
+
+## Response Shape
+
+- `GET_POSTS` → `author-> { name, "slug": slug.current, image { IMAGE_FRAGMENT } }`
+  (note: IMAGE_FRAGMENT projects `caption`, absent in schema).
+- `GET_POST_BY_SLUG` → `author-> { name, "slug", role, bio, image { IMAGE_FRAGMENT }, socialLinks }`
+  (socialLinks raw).
+
+## API / Service Usage
+
+No standalone author query — projected inside post queries. structure.ts:
+"Authors" under Blog.
+
+## Enums
+
+None (socialLink.platform enum lives in SocialLink.txt).
+
+## Validation Rules
+
+- Required: name, slug; image.alt required when image present.
+
+## Notes
+
+None.
