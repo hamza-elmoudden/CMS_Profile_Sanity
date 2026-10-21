@@ -1,0 +1,48 @@
+# Model: Tag (document)
+
+## Purpose
+
+Post taxonomy tag (`_type == "tag"`). Preview: title / slug.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| title | string | yes | — | UNKNOWN | Tag title |
+| slug | slug (source: title) | yes | — | UNKNOWN | URL slug |
+| description | text (rows 2) | no | — | UNKNOWN | Tag description |
+
+## Relations
+
+- Referenced by: `post.tags[]` (many : many).
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "tag",
+  "title": "NestJS",
+  "slug": {"_type": "slug", "current": "nestjs"},
+  "description": "..."
+}
+```
+
+## Response Shape
+
+Projected inside post queries only: `tags[]-> { title, "slug": slug.current }`.
+
+## API / Service Usage
+
+No standalone tag query. structure.ts: "Tags" under Taxonomy.
+
+## Enums
+
+None.
+
+## Validation Rules
+
+- Required: title, slug.
+
+## Notes
+
+- No tag archive query exists yet (GET_POSTS_BY_TAG not implemented).

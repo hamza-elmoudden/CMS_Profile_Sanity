@@ -1,0 +1,327 @@
+# Schema Overview — cmsprofile (Sanity Studio v6)
+
+Studio: `cms_profile` · project `330yc9gl` / dataset `production` (hardcoded in
+`sanity.config.ts` + `sanity.cli.ts`). No frontend code in this repo — all
+GROQ queries in `schemaTypes/queries.ts` are consumed by a separate Next.js app.
+
+All content types live flat in `schemaTypes/`, registered in
+`schemaTypes/index.ts`. Objects are registered before documents.
+
+## Compact model table
+
+| Model | Main Purpose | Relations |
+|---|---|---|
+| `seo` (object) | Reusable SEO/meta block | none |
+| `heroSection` (object) | Homepage hero copy + CTA | none (image field commented out) |
+| `socialLink` (object) | Platform + URL social link | none |
+| `navigationItem` (object) | Nav item with nested children | none |
+| `portableText` (object) | Shared rich-text definition (standalone type + `bodyField`) | none |
+| `homePage` (singleton doc) | Homepage hero + section titles + SEO | embeds heroSection, seo |
+| `aboutPage` (singleton doc) | About page copy + profile image + SEO | embeds seo |
+| `siteSettings` (singleton doc) | Global branding/contact/social/nav | embeds socialLink[], navigationItem[] |
+| `project` (doc) | Portfolio project | → skill[] (technologies), embeds seo |
+| `service` (doc) | Service offering | embeds seo |
+| `post` (doc) | Blog post | → author (req), → category, → tag[], → post[] (relatedPosts, max 4), embeds seo |
+| `author` (doc) | Blog author | embeds socialLink[] |
+| `experience` (doc) | Work experience entry | → skill[] (technologies) |
+| `projectsPage` (singleton doc) | /projects listing page config | → project[] (pinned, max 3) |
+| `postsPage` (singleton doc) | /blog listing page config | → post[] (pinned, max 3), → post (featured) |
+| `category` (doc) | Post taxonomy | ← referenced by post; embeds seo |
+| `tag` (doc) | Post taxonomy | ← referenced by post |
+| `skill` (doc) | Skill taxonomy | ← referenced by project, experience |
+| `contact` (doc) | Contact-form submission (visitor PII) | none |
+| `blockContent` (array type) | Legacy rich text — NOT registered | none |
+
+## ASCII dependency map
+
+```
+                         ┌───────────────────────── objects ─────────────────────────┐
+                         │ seo · heroSection · socialLink · navigationItem ·         │
+                         │ portableText (bodyField: block + codeBlock + inlineImage) │
+                         └───────┬───────────────┬───────────────┬───────────────────┘
+                                 │               │               │
+        ┌────────────┬───────────┴──────┐   ┌────┴─────┐   ┌─────┴──────┐
+        ▼            ▼                  ▼   ▼          ▼   ▼            ▼
+  homePage      aboutPage         siteSettings       author       project
+ (hero, seo,   (seo, profileImage, (logo, favicon,  (image,      (featuredImage,
+  section        jsonLd)           socialLinks[],    socialLinks)  gallery, seo,
+  titles,                        navigation[],                    technologies[]─►skill
+  jsonLd)                        footerText)
+        │                                                │
+        │                                                ▼
+        │                                          experience
+        │                                          (technologies[]─►skill)
+        ▼
+  projectsPage ──► project[] (pinned, max 3)
+  postsPage    ──► post[] (pinned, max 3) + post (featured)
+                          │
+        ┌─────────────────┼───────────────┐
+        ▼                 ▼               ▼
+      author ──►       category        tag[]        skill ◄── referenced by
+     (required)        (postCount                          project/experience
+                       computed in GROQ)
+
+  service (standalone; embeds seo)          contact (standalone; created by frontend form)
+```
+
+## Enums
+
+- `project.projectType`: personal · client · opensource · saas · side
+- `project.status` (radio, default `inProgress`): idea · inProgress ·
+  completed · archived
+- `skill.category` (required): backend · frontend · database · devops ·
+  architecture · seo · ai · mobile · other
+- `socialLink.platform`: github · linkedin · x · youtube · instagram ·
+  facebook · devto · medium · hashnode · stackoverflow · website · other
+- `codeBlock.language` (default `typescript`): typescript · javascript ·
+  python · go · bash · json · yaml · html · css · sql · dockerfile · plaintext
+- `projectsPage.twitterCard` / `postsPage.twitterCard` (radio, default
+  `summary_large_image`): summary_large_image · summary
+- Portable Text block styles: normal · h2 · h3 · h4 · blockquote (legacy
+  `blockContent` also has h1); lists: bullet · number (blockContent: bullet
+  only); decorators: strong · em · code · underline · strike-through
+  (blockContent: strong · em only).
+
+## Important data flows
+
+1. **Frontend rendering (read path)**: Next.js imports a query string from
+   `queries.ts` and calls `client.fetch(QUERY)`. All projections are explicit;
+   full documents are never returned. Slugs are projected as
+   `"slug": slug.current`; images expand via `IMAGE_FRAGMENT`
+   (`asset->{url, metadata{dimensions, lqip}}, alt, caption`); skills via
+   `SKILL_FRAGMENT`.
+2. **Homepage assembly**: `GET_HOME_PAGE` (singleton) returns hero copy +
+   section titles; featured project/skill/post cards are fetched separately
+   via `GET_FEATURED_PROJECTS`, `GET_FEATURED_SKILLS`, `GET_FEATURED_POSTS`
+   (all filter `featured == true`).
+3. **Detail pages**: `GET_*_BY_SLUG` parameterized with `$slug`; each content
+   type also has `GET_ALL_*_SLUGS` for sitemap/static params.
+4. **Blog**: post → author (required) / category / tags[] / relatedPosts[]
+   (self-reference, max 4). `GET_CATEGORIES` computes `postCount` with
+   `count(*[_type == "post" && references(^._id)])`.
+5. **Contact form (write path)**: the frontend creates `contact` documents
+   (name, email, subject, message, readOnly `createdAt`). These contain PII
+   and must not be exposed via public GROQ or drafts.
+
+## GROQ query catalog (schemaTypes/queries.ts)
+
+Fragments are defined in `Fragments.txt`. Below, every exported query with its
+exact returned shape (fragments expanded inline for readability).
+
+### GET_HOME_PAGE — no params, single doc
+```
+*[_type == "homePage"][0] {
+  hero {
+    title, description, ctaLabel, ctaUrl,
+    secondaryCtaLabel, secondaryCtaUrl,
+    image { asset->{ url, metadata { dimensions, lqip } }, alt, caption }
+  },
+  featuredProjectsTitle, featuredServicesTitle,
+  featuredSkillsTitle, featuredPostsTitle,
+  seo {
+    metaTitle, metaDescription, canonicalUrl, noIndex,
+    ogTitle, ogDescription,
+    ogImage { asset->{ url }, alt }
+  }
+}
+```
+NOTE: `hero.image` is projected but the `image` field is commented out in
+`heroSection.ts` — it will always be null/undefined.
+
+### GET_ABOUT_PAGE — no params, single doc
+```
+*[_type == "aboutPage"][0] {
+  title, introduction, biography,
+  profileImage { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  location,
+  seo { metaTitle, metaDescription, canonicalUrl, noIndex,
+        ogTitle, ogDescription, ogImage { asset->{ url }, alt } }
+}
+```
+NOTE: `profileImage` has no `caption` field in the schema (only `alt`) — the
+fragment projects a non-existent caption (harmless).
+
+### GET_PROJECTS — no params, ordered `featured desc, order asc`
+```
+*[_type == "project"] {
+  _id, title, "slug": slug.current, shortDescription,
+  featuredImage { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  projectType, status, featured, startDate, endDate,
+  technologies[]-> { _id, name, "slug": slug.current, category, icon, featured, order },
+  githubUrl, liveUrl
+}
+```
+
+### GET_FEATURED_PROJECTS — no params, `featured == true`, ordered `order asc`
+```
+*[_type == "project" && featured == true] {
+  _id, title, "slug": slug.current, shortDescription,
+  featuredImage { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  technologies[]-> { _id, name, "slug": slug.current, category, icon, featured, order },
+  githubUrl, liveUrl
+}
+```
+
+### GET_PROJECT_BY_SLUG — params: `$slug`
+```
+*[_type == "project" && slug.current == $slug][0] {
+  _id, title, "slug": slug.current, shortDescription, description,
+  featuredImage { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  gallery[] { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  technologies[]-> { _id, name, "slug": slug.current, category, icon, featured, order },
+  projectType, status, githubUrl, liveUrl, featured, startDate, endDate,
+  seo { metaTitle, metaDescription, canonicalUrl, noIndex,
+        ogTitle, ogDescription, ogImage { asset->{ url }, alt } }
+}
+```
+
+### GET_ALL_PROJECT_SLUGS — no params (sitemap)
+```
+*[_type == "project"] { "slug": slug.current }
+```
+
+### GET_SERVICES — no params, ordered `order asc`
+```
+*[_type == "service"] {
+  _id, title, "slug": slug.current, shortDescription, icon, featured, order
+}
+```
+
+### GET_SERVICE_BY_SLUG — params: `$slug`
+```
+*[_type == "service" && slug.current == $slug][0] {
+  _id, title, "slug": slug.current, shortDescription, description, icon,
+  seo { metaTitle, metaDescription, canonicalUrl, noIndex,
+        ogTitle, ogDescription, ogImage { asset->{ url }, alt } }
+}
+```
+
+### GET_ALL_SERVICE_SLUGS — no params (sitemap)
+```
+*[_type == "service"] { "slug": slug.current }
+```
+
+### GET_POSTS — no params, ordered `publishedAt desc`
+```
+*[_type == "post"] {
+  _id, title, "slug": slug.current, excerpt,
+  coverImage { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  publishedAt, featured,
+  author-> { name, "slug": slug.current, image { asset->{ url, metadata { dimensions, lqip } }, alt, caption } },
+  category-> { title, "slug": slug.current },
+  tags[]-> { title, "slug": slug.current }
+}
+```
+
+### GET_FEATURED_POSTS — no params, `featured == true`, ordered
+### `publishedAt desc`, first 3 (`[0...3]`)
+```
+*[_type == "post" && featured == true] | order(publishedAt desc)[0...3] {
+  _id, title, "slug": slug.current, excerpt,
+  coverImage { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  publishedAt,
+  category-> { title, "slug": slug.current }
+}
+```
+
+### GET_POST_BY_SLUG — params: `$slug`
+```
+*[_type == "post" && slug.current == $slug][0] {
+  _id, title, "slug": slug.current, excerpt, body,
+  coverImage { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  publishedAt, updatedAt,
+  author-> { name, "slug": slug.current, role, bio,
+             image { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+             socialLinks },
+  category-> { title, "slug": slug.current },
+  tags[]-> { title, "slug": slug.current },
+  relatedPosts[]-> {
+    _id, title, "slug": slug.current, excerpt,
+    coverImage { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+    publishedAt
+  },
+  seo { metaTitle, metaDescription, canonicalUrl, noIndex,
+        ogTitle, ogDescription, ogImage { asset->{ url }, alt } }
+}
+```
+NOTE: `author.socialLinks` is returned raw (unprojected array of
+`{_key, platform, url, label}` objects). `body` is the raw portable-text array.
+
+### GET_ALL_POST_SLUGS — no params (sitemap)
+```
+*[_type == "post"] { "slug": slug.current }
+```
+
+### GET_CATEGORIES — no params, ordered `title asc`
+```
+*[_type == "category"] {
+  _id, title, "slug": slug.current, description,
+  image { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  "postCount": count(*[_type == "post" && references(^._id)])
+}
+```
+NOTE: `image.caption` is projected but the schema has no `caption` field on
+category images.
+
+### GET_POSTS_BY_CATEGORY — params: `$categorySlug`
+```
+*[_type == "post" && category->slug.current == $categorySlug] | order(publishedAt desc) {
+  _id, title, "slug": slug.current, excerpt,
+  coverImage { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  publishedAt,
+  author-> { name, "slug": slug.current },
+  tags[]-> { title, "slug": slug.current }
+}
+```
+
+### GET_SKILLS — no params, ordered `order asc`
+```
+*[_type == "skill"] {
+  _id, name, "slug": slug.current, category, icon, featured, order,
+  description
+}
+```
+
+### GET_FEATURED_SKILLS — no params, `featured == true`, ordered `order asc`
+```
+*[_type == "skill" && featured == true] {
+  _id, name, "slug": slug.current, category, icon, featured, order
+}
+```
+
+### GET_EXPERIENCE — no params, ordered `startDate desc`
+```
+*[_type == "experience"] {
+  _id, company, position, description, startDate, endDate, current,
+  technologies[]-> { _id, name, "slug": slug.current, category, icon, featured, order },
+  order
+}
+```
+
+### GET_SITE_SETTINGS — no params, single doc
+```
+*[_type == "siteSettings"][0] {
+  siteName, siteTitle, siteDescription,
+  logo { asset->{ url, metadata { dimensions, lqip } }, alt, caption },
+  defaultOgImage { asset->{ url }, alt },
+  email, phone, location,
+  socialLinks,        // raw array of {_key, platform, url, label}
+  navigation,         // raw array of navigationItem objects
+  footerText
+}
+```
+NOTE: `logo.caption` is projected but the schema has no `caption` field on
+the logo; `defaultOgImage` uses a reduced inline projection (no
+metadata/caption — schema has none); `favicon` is NOT projected at all.
+
+## Gotchas
+
+- `structure.ts` (custom sidebar + singleton enforcement) is not passed to
+  `structureTool()` in `sanity.config.ts` — currently inert.
+- `contact.ts` export name is `contacts`; GROQ uses `_type == "contact"`.
+- `jsonLd` free-text fields (homePage, aboutPage, postsPage) are annotated as
+  needing `@sanity/code-input`, not installed.
+- `post.publishedAt` validation is a warning ("Consider setting a publish
+  date"), not an error.
+- No query exists for `projectsPage`, `postsPage`, or `contact` — frontend
+  fetches those directly (page singletons) or creates them (contact).

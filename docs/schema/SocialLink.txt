@@ -1,0 +1,53 @@
+# Model: SocialLink (object)
+
+## Purpose
+
+A single social-media link; embedded in `author.socialLinks[]` and
+`siteSettings.socialLinks[]`.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| platform | string (options list) | yes | — | UNKNOWN | Platform key, e.g. "github" |
+| url | url | yes | — | UNKNOWN | http/https URL |
+| label | string | no | — | UNKNOWN | Optional display label; defaults to platform name |
+
+## Relations
+
+None (pure value object).
+
+## Input / Request Shape
+
+```json
+{"platform": "github", "url": "https://github.com/user", "label": "@user"}
+```
+
+## Response Shape
+
+No dedicated projection — returned raw where used:
+
+- `GET_POST_BY_SLUG` → `author.socialLinks` (raw array):
+  `[{"_key": "...", "platform": "github", "url": "https://...", "label": "string|null"}]`
+- `GET_SITE_SETTINGS` → `socialLinks` (same raw shape).
+
+## API / Service Usage
+
+- `GET_SITE_SETTINGS` — projects `socialLinks` raw.
+- `GET_POST_BY_SLUG` — projects `author.socialLinks` raw.
+- No structure.ts entry (object).
+
+## Enums
+
+`platform` — SOCIAL_PLATFORMS: github · linkedin · x · youtube · instagram ·
+facebook · devto · medium · hashnode · stackoverflow · website · other.
+
+## Validation Rules
+
+- `platform`: required.
+- `url`: required; uri scheme http/https.
+- `label`: optional.
+
+## Notes
+
+None.
