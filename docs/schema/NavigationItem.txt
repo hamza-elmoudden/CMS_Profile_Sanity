@@ -1,0 +1,70 @@
+# Model: NavigationItem (object)
+
+## Purpose
+
+Main-navigation menu item; embedded in `siteSettings.navigation[]`. Supports
+one level of nested sub-items.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| label | string | yes | — | UNKNOWN | Menu label |
+| url | string | yes | — | UNKNOWN | Relative path for internal links, e.g. "/projects" (plain string) |
+| external | boolean | no | false | UNKNOWN | Open in new tab |
+| order | number | no | — | UNKNOWN | Sort order |
+| children | array of inline objects | no | — | UNKNOWN | Sub-items |
+
+Child object fields: `label` (string, required), `url` (string, required),
+`external` (boolean, initialValue false).
+
+## Relations
+
+None (children are inline anonymous objects, not references).
+
+## Input / Request Shape
+
+```json
+{
+  "label": "Projects",
+  "url": "/projects",
+  "external": false,
+  "order": 1,
+  "children": [{"label": "Sub", "url": "/projects/x", "external": false}]
+}
+```
+
+## Response Shape
+
+Via `GET_SITE_SETTINGS` → `navigation` (raw, unprojected):
+
+```json
+[
+  {
+    "_key": "...",
+    "label": "Projects",
+    "url": "/projects",
+    "external": false,
+    "order": 1,
+    "children": [{"_key": "...", "label": "Sub", "url": "/projects/x", "external": false}]
+  }
+]
+```
+
+## API / Service Usage
+
+- `GET_SITE_SETTINGS` — projects `navigation` raw.
+- No structure.ts entry (object).
+
+## Enums
+
+None.
+ 
+## Validation Rules
+
+- `label`, `url`: required (also on children).
+- No URL-format validation on `url` (plain string by design).
+
+## Notes
+
+- `order` exists but the query returns navigation unsorted — frontend must sort.

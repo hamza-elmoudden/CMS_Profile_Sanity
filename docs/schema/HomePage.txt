@@ -1,0 +1,66 @@
+# Model: HomePage (singleton document)
+
+## Purpose
+
+Singleton document for the site homepage (`_type == "homePage"`). Intended
+fixed `_id` = `homePage` via structure.ts (see Notes). Groups: hero
+(default), sections, seo.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| hero | heroSection (object) | no | — | UNKNOWN | Hero copy + CTAs |
+| featuredProjectsTitle | string | no | "Selected Projects" | UNKNOWN | Section heading |
+| featuredServicesTitle | string | no | "What I Do" | UNKNOWN | Section heading |
+| featuredSkillsTitle | string | no | "Tech Stack" | UNKNOWN | Section heading |
+| featuredPostsTitle | string | no | "From the Blog" | UNKNOWN | Section heading |
+| seo | seo (object) | no | — | UNKNOWN | Page SEO |
+| jsonLd | text | no | — | UNKNOWN | JSON-LD schema; annotated as needing @sanity/code-input (not installed) |
+
+## Relations
+
+- Embeds `heroSection` (hero) and `seo` objects.
+- Section content itself (featured projects/services/skills/posts) is NOT
+  referenced here — fetched separately by featured queries.
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "homePage",
+  "hero": {"title": "...", "description": "...", "ctaLabel": "...", "ctaUrl": "/projects", "secondaryCtaLabel": "...", "secondaryCtaUrl": "/"},
+  "featuredProjectsTitle": "Selected Projects",
+  "featuredServicesTitle": "What I Do",
+  "featuredSkillsTitle": "Tech Stack",
+  "featuredPostsTitle": "From the Blog",
+  "seo": {"metaTitle": "...", "...": "..."},
+  "jsonLd": "..."
+}
+```
+
+## Response Shape
+
+Via `GET_HOME_PAGE` (exact projection — see schema.txt; hero + 4 section
+titles + SEO_FRAGMENT; `hero.image` projected but absent from schema).
+
+## API / Service Usage
+
+- `GET_HOME_PAGE` — `*[_type == "homePage"][0] {...}`, no params.
+- structure.ts: singleton list item "Home Page", documentId `homePage`
+  (currently inert — structure not wired into sanity.config.ts).
+
+## Enums
+
+None.
+
+## Validation Rules
+
+No field-level validation; no required fields.
+
+## Notes
+
+- Singleton enforcement depends on the inert structure.ts.
+- `jsonLd` free-text field intended for code editing; plugin missing.
+- `hero.image` projected by GET_HOME_PAGE but commented out in heroSection —
+  always null/absent.

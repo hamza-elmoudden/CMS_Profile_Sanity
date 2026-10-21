@@ -1,0 +1,72 @@
+# Model: PortableText (object / shared rich text)
+
+## Purpose
+
+The single rich-text definition used across the Studio. Exports:
+- `bodyField` — drop-in field definition spread into document schemas
+  (`project.description`, `service.description`, `post.body`,
+  `aboutPage.biography`, `experience.description`).
+- `portableText` — standalone registered array object type
+  (`name: "portableText"`).
+- Array members: `portableTextContent` (block), `codeBlock` (object),
+  `portableTextImage` (image, name `inlineImage`).
+
+## Fields
+
+Not a flat-field model — the array `of` members are:
+
+| Member | Type | Fields / config |
+|---|---|---|
+| block | block | styles: normal, h2, h3, h4, blockquote · lists: bullet, number · decorators: strong, em, code, underline, strike-through · annotations: `link` {href (url, schemes http/https/mailto/tel), blank (bool, default false)}, `internalLink` {href (string path)} |
+| codeBlock | object | language (string enum, default "typescript"), code (text, required), filename (string) |
+| inlineImage | image (hotspot) | alt (string, required), caption (string) |
+
+## Relations
+
+None (annotations are inline objects; `internalLink` is a plain path string,
+NOT a document reference).
+
+## Input / Request Shape
+
+```json
+{
+  "body": [
+    {"_type": "block", "style": "h2", "children": [{"_type": "span", "text": "Title", "marks": []}]},
+    {"_type": "block", "listItem": "bullet", "children": [{"_type": "span", "text": "item"}]},
+    {"_type": "codeBlock", "language": "typescript", "code": "...", "filename": "index.ts"},
+    {"_type": "inlineImage", "asset": {"_ref": "image-..."}, "alt": "...", "caption": "..."}
+  ]
+}
+```
+
+## Response Shape
+
+`GET_POST_BY_SLUG` is the only query projecting `body` — returned as the raw
+portable-text array (same shape as input, plus `_key` on every node). Other
+`bodyField` bodies (project, service, aboutPage, experience) are NOT projected
+by any query — fetch the document directly if needed.
+
+## API / Service Usage
+
+- `GET_POST_BY_SLUG` — projects `body` (post only).
+- No structure.ts entry.
+
+## Enums
+
+- codeBlock.language: typescript · javascript · python · go · bash · json ·
+  yaml · html · css · sql · dockerfile · plaintext (default typescript).
+- block styles: normal · h2 · h3 · h4 · blockquote.
+- lists: bullet · number.
+- decorators: strong · em · code · underline · strike-through.
+
+## Validation Rules
+
+- codeBlock.code: required.
+- inlineImage.alt: required.
+- link.href: uri schemes http, https, mailto, tel (when present).
+
+## Notes
+
+- Legacy `blockContent.ts` (h1 style, only strong/em decorators, bullet-only
+  lists, url-only link annotation, plain image member) is NOT registered in
+  `index.ts` — kept as an alternate definition.
