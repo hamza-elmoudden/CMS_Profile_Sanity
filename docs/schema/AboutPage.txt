@@ -1,0 +1,70 @@
+# Model: AboutPage (singleton document)
+
+## Purpose
+
+Singleton document for the /about page (`_type == "aboutPage"`). Groups:
+content (default), seo.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| title | string | yes | "About Me" | UNKNOWN | Page title |
+| introduction | text (rows 4) | no | — | UNKNOWN | Short intro at top of page |
+| biography | array (bodyField portable text) | no | — | UNKNOWN | Full biography rich text |
+| profileImage | image (hotspot) + alt (string, required) | no | — | UNKNOWN | Profile photo; no caption field |
+| location | string | no | — | UNKNOWN | e.g. "Morocco" |
+| seo | seo (object) | no | — | UNKNOWN | Page SEO |
+| jsonLd | text | no | — | UNKNOWN | JSON-LD; needs @sanity/code-input (not installed) |
+
+## Relations
+
+- Embeds `seo` object; `biography` uses the shared portable-text `bodyField`.
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "aboutPage",
+  "title": "About Me",
+  "introduction": "...",
+  "biography": [{"_type": "block", "...": "..."}],
+  "profileImage": {"asset": {"_ref": "image-..."}, "alt": "..."},
+  "location": "Morocco",
+  "seo": {"metaTitle": "..."},
+  "jsonLd": "..."
+}
+```
+
+## Response Shape
+
+Via `GET_ABOUT_PAGE`:
+
+```json
+{
+  "title": "...", "introduction": "...", "biography": [...],
+  "profileImage": {"asset": {"url": "...", "metadata": {"dimensions": {...}, "lqip": "..."}}, "alt": "..."},
+  "location": "...",
+  "seo": {"metaTitle": "...", "metaDescription": "...", "canonicalUrl": "...", "noIndex": false, "ogTitle": "...", "ogDescription": "...", "ogImage": {"asset": {"url": "..."}, "alt": "..."}}
+}
+```
+
+NOTE: query projects `caption` via IMAGE_FRAGMENT but the schema defines no
+caption on profileImage — harmless, always absent.
+
+## API / Service Usage
+
+- `GET_ABOUT_PAGE` — `*[_type == "aboutPage"][0] {...}`, no params.
+- structure.ts: singleton "About Page" (inert — not wired in).
+
+## Enums
+
+None.
+
+## Validation Rules
+
+- `title` required; `profileImage.alt` required when image present.
+
+## Notes
+
+- Singleton enforcement relies on inert structure.ts.

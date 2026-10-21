@@ -1,0 +1,75 @@
+# Model: HeroSection (object)
+
+## Purpose
+
+Hero section copy for the homepage; embedded in `homePage.hero`.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| title | string | yes | — | UNKNOWN | Hero headline, e.g. "Software Developer & Entrepreneur in Morocco" |
+| description | text (rows 3) | no | — | UNKNOWN | Hero paragraph |
+| ctaLabel | string | no | — | UNKNOWN | Primary CTA label, e.g. "View Projects" |
+| ctaUrl | string | no | — | UNKNOWN | Primary CTA URL, e.g. "/projects" (plain string, no URI validation) |
+| secondaryCtaLabel | string | no | — | UNKNOWN | Secondary CTA label |
+| secondaryCtaUrl | string | no | — | UNKNOWN | Secondary CTA URL |
+| image | image | — | — | — | COMMENTED OUT in schema — does not exist on documents |
+
+## Relations
+
+None.
+
+## Input / Request Shape
+
+```json
+{
+  "hero": {
+    "title": "string",
+    "description": "string",
+    "ctaLabel": "string",
+    "ctaUrl": "/projects",
+    "secondaryCtaLabel": "string",
+    "secondaryCtaUrl": "/blog"
+  }
+}
+```
+
+## Response Shape
+
+Via `GET_HOME_PAGE`:
+
+```json
+{
+  "hero": {
+    "title": "string|null",
+    "description": "string|null",
+    "ctaLabel": "string|null",
+    "ctaUrl": "string|null",
+    "secondaryCtaLabel": "string|null",
+    "secondaryCtaUrl": "string|null",
+    "image": {"asset": {"url": "...", "metadata": {...}}, "alt": "...", "caption": "..."} | null
+  }
+}
+```
+
+NOTE: `hero.image` is projected in `GET_HOME_PAGE` but the field is commented
+out in the schema — it will always be absent/null.
+
+## API / Service Usage
+
+- `GET_HOME_PAGE` (no params) — projects `hero` with IMAGE_FRAGMENT.
+- No structure.ts entry (object).
+
+## Enums
+
+None.
+
+## Validation Rules
+
+- `title` is required; all other active fields optional.
+- `ctaUrl`/`secondaryCtaUrl` are plain strings with no URL validation.
+
+## Notes
+
+- The commented-out `image` field would have had a required `alt`.
