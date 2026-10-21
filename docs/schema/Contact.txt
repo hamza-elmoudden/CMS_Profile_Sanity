@@ -1,0 +1,63 @@
+# Model: Contact (document)
+
+## Purpose
+
+Contact-form submission created by the frontend (`_type == "contact"`).
+Contains visitor PII — must NOT be exposed via public GROQ queries or drafts.
+The Studio is the read/review UI.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| name | string | yes | — | UNKNOWN | Visitor name; min 2, max 100 |
+| email | string (email format) | yes | — | UNKNOWN | Visitor email |
+| subject | string | no | — | UNKNOWN | max 200 |
+| message | text | yes | — | UNKNOWN | min 10, max 5000 |
+| createdAt | datetime | no (auto) | new Date().toISOString() via initialValue | UNKNOWN | Read-only timestamp |
+
+## Relations
+
+None.
+
+## Input / Request Shape
+
+Created by the frontend (no Studio editing intended):
+```json
+{
+  "_type": "contact",
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "subject": "Project inquiry",
+  "message": "Hello, ...",
+  "createdAt": "2026-09-21T10:00:00.000Z"
+}
+```
+
+## Response Shape
+
+No GROQ query exists for this type (deliberately — PII).
+
+## API / Service Usage
+
+None in queries.ts. Not in structure.ts. Documents are created via Sanity's
+mut API by the frontend contact form.
+
+## Enums
+
+None.
+
+## Validation Rules
+
+- name: required, min 2, max 100.
+- email: required, `.email()` format.
+- subject: max 200.
+- message: required, min 10, max 5000.
+- createdAt: read-only, auto-initialized.
+
+## Notes
+
+- File `contact.ts` exports `contacts` but the type `name` is `contact` —
+  GROQ/imports must use `"contact"`.
+- Fields are plain object literals (not `defineField`), with `Rule: any`
+  typed validations.

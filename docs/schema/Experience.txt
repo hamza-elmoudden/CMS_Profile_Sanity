@@ -1,0 +1,70 @@
+# Model: Experience (document)
+
+## Purpose
+
+Work experience entry (`_type == "experience"`). Preview: position / company.
+Ordering: Most Recent First (startDate desc).
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| company | string | yes | — | UNKNOWN | Company / organisation |
+| position | string | yes | — | UNKNOWN | Position / role |
+| description | array (bodyField portable text) | no | — | UNKNOWN | Role description rich text |
+| startDate | date | yes | — | UNKNOWN | Start date |
+| endDate | date | no | — | UNKNOWN | Blank if current role; custom rule ≥ startDate |
+| current | boolean | no | false | UNKNOWN | Current role flag |
+| technologies | array of reference → skill | no | — | UNKNOWN | Technologies used |
+| order | number | no | 0 | UNKNOWN | Display order |
+
+## Relations
+
+- experience → skill[] (`technologies`).
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "experience",
+  "company": "Acme",
+  "position": "Senior Backend Developer",
+  "description": [{"_type": "block"}],
+  "startDate": "2023-01",
+  "endDate": "2025-05",
+  "current": false,
+  "technologies": [{"_type": "reference", "_ref": "skillId"}],
+  "order": 0
+}
+```
+
+## Response Shape
+
+Via `GET_EXPERIENCE` (ordered `startDate desc`):
+
+```json
+{
+  "_id": "...", "company": "...", "position": "...", "description": [...],
+  "startDate": "...", "endDate": "...", "current": false,
+  "technologies": [{"_id": "...", "name": "...", "slug": "...", "category": "...", "icon": "...", "featured": false, "order": 0}],
+  "order": 0
+}
+```
+
+## API / Service Usage
+
+- `GET_EXPERIENCE` — no params.
+- structure.ts: "Experience" under Content.
+
+## Enums
+
+None.
+
+## Validation Rules
+
+- Required: company, position, startDate.
+- endDate custom rule: must not be before startDate.
+
+## Notes
+
+- `description` (portable text) is projected raw in GET_EXPERIENCE.

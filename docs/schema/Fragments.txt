@@ -1,0 +1,63 @@
+# Model: Fragments (shared GROQ fragments)
+
+## Purpose
+
+Reusable GROQ projection fragments exported from `schemaTypes/queries.ts`.
+They are interpolated into query strings with `${...}` — they are NOT types in
+the Sanity schema and not registered in `index.ts`.
+
+## SEO_FRAGMENT
+
+```groq
+seo {
+  metaTitle,
+  metaDescription,
+  canonicalUrl,
+  noIndex,
+  ogTitle,
+  ogDescription,
+  ogImage { asset->{ url }, alt }
+}
+```
+
+- Used by: `GET_HOME_PAGE`, `GET_ABOUT_PAGE`, `GET_PROJECT_BY_SLUG`,
+  `GET_SERVICE_BY_SLUG`, `GET_POST_BY_SLUG`.
+- Shape: the `seo` object with `ogImage` reduced to `{asset->{url}, alt}`
+  (no metadata, no caption — schema has no caption on ogImage).
+- Fields sourced from the `seo` object type (see Seo.txt).
+
+## IMAGE_FRAGMENT
+
+```groq
+asset->{ url, metadata { dimensions, lqip } },
+alt,
+caption
+```
+
+- Used by: all image projections in list/detail queries (homePage hero,
+  aboutPage profileImage, project featuredImage/gallery, post coverImage,
+  category image, siteSettings logo).
+- Shape: `{asset: {url, metadata: {dimensions, lqip}}, alt, caption}`.
+- NOTE: several schemas (aboutPage.profileImage, category.image,
+  siteSettings.logo) have no `caption` field — the projection is harmless but
+  `caption` will be absent in responses.
+
+## SKILL_FRAGMENT
+
+```groq
+_id,
+name,
+"slug": slug.current,
+category,
+icon,
+featured,
+order
+```
+
+- Used by: `GET_PROJECTS`, `GET_FEATURED_PROJECTS`, `GET_PROJECT_BY_SLUG`,
+  `GET_EXPERIENCE` (all dereference `technologies[]->`), plus `GET_SKILLS` /
+  `GET_FEATURED_SKILLS` (with `description` added in GET_SKILLS).
+
+## Fields
+
+Not applicable — fragments are projections, not schema types.
