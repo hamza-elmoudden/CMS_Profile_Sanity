@@ -1,0 +1,78 @@
+# Model: ProjectsPage (singleton document)
+
+## Purpose
+
+Singleton document for the /projects listing page (`_type == "projectsPage"`).
+Groups: hero (default), SEO & Meta, Open Graph, Structured Data, Page
+Settings. Intended fixed `_id` = `projectsPage`.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| heading | string | yes | "Projects" | UNKNOWN | Visible page h1 |
+| subheading | text (rows 2) | no | "A selection of the products, tools, and systems I have built." | UNKNOWN | Below heading |
+| metaTitle | string | yes | "Projects — Hamza Elmouddane" | UNKNOWN | min 10, max 60 (warning) |
+| metaDescription | text | yes | "Browse the projects built by…" | UNKNOWN | min 50, max 160 (warning) |
+| canonicalUrl | url | no | — | UNKNOWN | http/https (warning); auto-generated if blank |
+| noIndex | boolean | no | false | UNKNOWN | Block indexing |
+| ogTitle | string | no | — | UNKNOWN | Falls back to metaTitle |
+| ogDescription | text | no | — | UNKNOWN | Falls back to metaDescription |
+| ogImage | image (hotspot) + alt | no | — | UNKNOWN | 1200×630 |
+| twitterCard | string (radio) | no | "summary_large_image" | UNKNOWN | summary_large_image · summary |
+| structuredDataName | string | no | "Projects by Hamza Elmouddane" | UNKNOWN | JSON-LD CollectionPage name |
+| structuredDataDescription | text | no | "A collection of web applications…" | UNKNOWN | JSON-LD description |
+| projectsPerPage | number | no | 9 | UNKNOWN | min 1, max 50, integer (warning) |
+| showFilters | boolean | no | true | UNKNOWN | Show project-type/status filter bar |
+| filterLabels | object {all, personal, client, opensource, saas, side} | no | each has its own initialValue ("All", "Personal", "Client Work", "Open Source", "SaaS", "Side Project") | UNKNOWN | Filter option labels |
+| pinnedProjects | array of reference → project | no | — | UNKNOWN | Max 3, unique |
+
+## Relations
+
+- projectsPage → project[] (`pinnedProjects`, max 3, unique).
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "projectsPage",
+  "heading": "Projects",
+  "metaTitle": "Projects — Hamza Elmouddane",
+  "metaDescription": "...",
+  "twitterCard": "summary_large_image",
+  "projectsPerPage": 9,
+  "showFilters": true,
+  "filterLabels": {"all": "All", "personal": "Personal", "client": "Client Work", "opensource": "Open Source", "saas": "SaaS", "side": "Side Project"},
+  "pinnedProjects": [{"_type": "reference", "_ref": "projectId"}]
+}
+```
+
+## Response Shape
+
+No GROQ query exists for this type — frontend fetches the document directly.
+Document shape = fields above (plus `_id`, `_type`, `_createdAt`, `_updatedAt`).
+
+## API / Service Usage
+
+None in queries.ts. Not in structure.ts (inert file also omits it — only
+homePage/aboutPage/siteSettings are singleton-listed there).
+
+## Enums
+
+- twitterCard: summary_large_image · summary (default summary_large_image).
+- filterLabels keys mirror the project.projectType enum plus "all".
+
+## Validation Rules
+
+- Required: heading, metaTitle (min 10/max 60 warning), metaDescription
+  (min 50/max 160 warning).
+- canonicalUrl: uri http/https (warning).
+- projectsPerPage: min 1, max 50, integer (warning).
+- pinnedProjects: max 3, unique.
+
+## Notes
+
+- Meta fields are flattened here (no `seo` object) — differs from
+  project/service/post.
+- No GET_PROJECTS_PAGE query — frontend must query `_type == "projectsPage"`
+  itself (drafts/published handling is frontend's concern).

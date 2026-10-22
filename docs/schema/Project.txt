@@ -1,0 +1,89 @@
+# Model: Project (document)
+
+## Purpose
+
+Portfolio project entry (`_type == "project"`). Groups: content (default),
+media, links & meta, seo. Preview: title / status / featuredImage.
+Orderings: Featured First, Newest First.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| title | string | yes | — | UNKNOWN | Project title |
+| slug | slug (source: title) | yes | — | UNKNOWN | URL slug |
+| shortDescription | text (rows 2) | yes | — | UNKNOWN | Card/list summary; max 200 |
+| description | array (bodyField portable text) | no | — | UNKNOWN | Full description rich text |
+| projectType | string (options list) | no | — | UNKNOWN | personal/client/opensource/saas/side |
+| status | string (radio) | yes | "inProgress" | UNKNOWN | idea/inProgress/completed/archived |
+| technologies | array of reference → skill | no | — | UNKNOWN | Tech stack |
+| featuredImage | image (hotspot) + alt (req) + caption | no | — | UNKNOWN | Card/detail image |
+| gallery | array of image (hotspot) + alt (req) + caption | no | — | UNKNOWN | Detail-page gallery |
+| githubUrl | url | no | — | UNKNOWN | http/https only |
+| liveUrl | url | no | — | UNKNOWN | http/https only |
+| featured | boolean | no | false | UNKNOWN | Show in homepage featured section |
+| order | number | no | 0 | UNKNOWN | Display order |
+| startDate | date | no | — | UNKNOWN | Start date (YYYY-MM-DD) |
+| endDate | date | no | — | UNKNOWN | Must be ≥ startDate (custom rule) |
+| seo | seo (object) | no | — | UNKNOWN | Page SEO |
+
+## Relations
+
+- project → skill[] (`technologies`, many-to-one direction: project holds refs).
+- Embeds `seo` object.
+- Referenced by: `projectsPage.pinnedProjects[]` (max 3).
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "project",
+  "title": "My Project",
+  "slug": {"_type": "slug", "current": "my-project"},
+  "shortDescription": "max 200 chars",
+  "description": [{"_type": "block", "...": "..."}],
+  "projectType": "personal",
+  "status": "inProgress",
+  "technologies": [{"_type": "reference", "_ref": "skillId"}],
+  "featuredImage": {"asset": {"_ref": "image-..."}, "alt": "...", "caption": "..."},
+  "gallery": [{"asset": {"_ref": "image-..."}, "alt": "..."}],
+  "githubUrl": "https://github.com/...",
+  "liveUrl": "https://...",
+  "featured": false,
+  "order": 0,
+  "startDate": "2024-01",
+  "endDate": "2024-06",
+  "seo": {"metaTitle": "..."}
+}
+```
+
+## Response Shape
+
+- `GET_PROJECTS` (list): `_id, title, slug, shortDescription, featuredImage{IMAGE_FRAGMENT}, projectType, status, featured, startDate, endDate, technologies[]->{SKILL_FRAGMENT}, githubUrl, liveUrl` — ordered `featured desc, order asc`.
+- `GET_FEATURED_PROJECTS`: subset (no status/dates) filtered `featured == true`, ordered `order asc`.
+- `GET_PROJECT_BY_SLUG` (detail): list shape + `description`, `gallery[]`, `seo` (SEO_FRAGMENT).
+- `GET_ALL_PROJECT_SLUGS`: `{"slug": "..."}`.
+
+See schema.txt for the fully expanded projections.
+
+## API / Service Usage
+
+`GET_PROJECTS`, `GET_FEATURED_PROJECTS`, `GET_PROJECT_BY_SLUG` (param
+`$slug`), `GET_ALL_PROJECT_SLUGS`. structure.ts: "Projects" under Content.
+
+## Enums
+
+- projectType: personal · client · opensource · saas · side
+- status: idea · inProgress · completed · archived (default inProgress)
+
+## Validation Rules
+
+- Required: title, slug, shortDescription (max 200), status.
+- githubUrl/liveUrl: uri schemes http/https.
+- endDate custom rule: must not be before startDate (string comparison).
+- featuredImage.alt and each gallery image alt: required.
+- featured/order have initialValues false/0.
+
+## Notes
+
+- `description` (portable text) is projected only in GET_PROJECT_BY_SLUG.
