@@ -1,0 +1,79 @@
+# Model: Seo (object)
+
+## Purpose
+
+Reusable SEO/meta object embedded in documents (project, service, post,
+category, homePage, aboutPage). Collapsed by default in the Studio
+(`collapsible: true, collapsed: true`).
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| metaTitle | string | no (warning max 60) | — | UNKNOWN (Sanity infers nullability at runtime) | Meta title, recommended 50–60 chars |
+| metaDescription | text | no (warning max 160) | — | UNKNOWN | Meta description, recommended 150–160 chars |
+| canonicalUrl | url | no (warning: uri http/https) | — | UNKNOWN | Override; blank = auto-generate from page URL |
+| noIndex | boolean | no | false | UNKNOWN | Prevent search-engine indexing |
+| ogTitle | string | no | — | UNKNOWN | Open Graph title; falls back to metaTitle |
+| ogDescription | text | no | — | UNKNOWN | Open Graph description; falls back to metaDescription |
+| ogImage | image (hotspot) + alt (string) | no | — | UNKNOWN | OG image, recommended 1200×630px |
+
+## Relations
+
+None (pure value object).
+
+## Input / Request Shape
+
+```json
+{
+  "seo": {
+    "metaTitle": "string",
+    "metaDescription": "string",
+    "canonicalUrl": "https://example.com",
+    "noIndex": false,
+    "ogTitle": "string",
+    "ogDescription": "string",
+    "ogImage": {"_type": "image", "asset": {"_type": "reference", "_ref": "image-..."}, "alt": "string"}
+  }
+}
+```
+
+## Response Shape
+
+Via `SEO_FRAGMENT` (used in homePage, aboutPage, project, service, post detail queries):
+
+```json
+{
+  "metaTitle": "string|null",
+  "metaDescription": "string|null",
+  "canonicalUrl": "string|null",
+  "noIndex": false,
+  "ogTitle": "string|null",
+  "ogDescription": "string|null",
+  "ogImage": {"asset": {"url": "string"}, "alt": "string|null"} | null
+}
+```
+
+## API / Service Usage
+
+Fragment of `GET_HOME_PAGE`, `GET_ABOUT_PAGE`, `GET_PROJECT_BY_SLUG`,
+`GET_SERVICE_BY_SLUG`, `GET_POST_BY_SLUG`. No standalone query. Not projected
+in any list query (SEO only fetched on detail/singleton pages).
+
+## Enums
+
+None.
+
+## Validation Rules
+
+- metaTitle: max 60 (warning only).
+- metaDescription: max 160 (warning only).
+- canonicalUrl: uri scheme http/https (warning only).
+- None of the fields are `required()` — all optional.
+
+## Notes
+
+- All validations are warnings; an SEO block can be entirely empty.
+- `siteSettings.defaultOgImage` and the page singletons (projectsPage,
+  postsPage) do NOT use this object — they carry flattened metaTitle /
+  metaDescription / ogImage fields directly.

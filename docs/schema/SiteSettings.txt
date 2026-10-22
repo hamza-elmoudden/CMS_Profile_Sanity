@@ -1,0 +1,83 @@
+# Model: SiteSettings (singleton document)
+
+## Purpose
+
+Global site configuration singleton (`_type == "siteSettings"`). Groups:
+branding (default), contact, social, navigation, seo.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| siteName | string | yes | — | UNKNOWN | Site name |
+| siteTitle | string | no | — | UNKNOWN | Browser tab / default OG title |
+| siteDescription | text (rows 2) | no | — | UNKNOWN | Default meta description |
+| logo | image (hotspot) + alt (string) | no | — | UNKNOWN | Site logo |
+| favicon | image | no | — | UNKNOWN | Favicon; no alt/hotspot config |
+| defaultOgImage | image (hotspot) | no | — | UNKNOWN | Fallback OG image (1200×630); no alt field |
+| email | string | no | — | UNKNOWN | Contact email (plain string, no format validation) |
+| phone | string | no | — | UNKNOWN | Contact phone |
+| location | string | no | — | UNKNOWN | e.g. "Morocco" |
+| socialLinks | array of socialLink | no | — | UNKNOWN | Social links |
+| navigation | array of navigationItem | no | — | UNKNOWN | Main navigation |
+| footerText | string | no | — | UNKNOWN | Footer copyright text |
+
+## Relations
+
+Embeds `socialLink[]` and `navigationItem[]` objects (no document references).
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "siteSettings",
+  "siteName": "Hamza Elmouddane",
+  "siteTitle": "...",
+  "siteDescription": "...",
+  "logo": {"asset": {"_ref": "image-..."}, "alt": "..."},
+  "favicon": {"asset": {"_ref": "image-..."}},
+  "defaultOgImage": {"asset": {"_ref": "image-..."}},
+  "email": "...", "phone": "...", "location": "Morocco",
+  "socialLinks": [{"platform": "github", "url": "https://..."}],
+  "navigation": [{"label": "Projects", "url": "/projects"}],
+  "footerText": "© ..."
+}
+```
+
+## Response Shape
+
+Via `GET_SITE_SETTINGS`:
+
+```json
+{
+  "siteName": "...", "siteTitle": "...", "siteDescription": "...",
+  "logo": {"asset": {"url": "...", "metadata": {...}}, "alt": "..."},
+  "defaultOgImage": {"asset": {"url": "..."}, "alt": null},
+  "email": "...", "phone": "...", "location": "...",
+  "socialLinks": [{"_key": "...", "platform": "...", "url": "...", "label": "..."}],
+  "navigation": [{"_key": "...", "label": "...", "url": "...", "external": false, "children": [...]}],
+  "footerText": "..."
+}
+```
+
+NOTE: query projects `logo.caption` (absent in schema — harmless);
+`defaultOgImage.alt` projected but the schema has no alt field (always null);
+`favicon` is NOT projected at all.
+
+## API / Service Usage
+
+- `GET_SITE_SETTINGS` — `*[_type == "siteSettings"][0] {...}`, no params.
+- structure.ts: singleton "Site Settings" (inert — not wired in).
+
+## Enums
+
+None (socialLink.platform enum lives in SocialLink.txt).
+
+## Validation Rules
+
+- `siteName` required. All other fields optional; no format validations.
+
+## Notes
+
+- `email` is a plain string with no `.email()` validation.
+- Singleton enforcement relies on inert structure.ts.

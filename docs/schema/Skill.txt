@@ -1,0 +1,66 @@
+# Model: Skill (document)
+
+## Purpose
+
+Skill taxonomy (`_type == "skill"`), also used as "technologies" on projects
+and experiences. Exports `SKILL_CATEGORIES` enum list. Preview: name /
+category. Orderings: Category then Name, Display Order.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| name | string | yes | — | UNKNOWN | Skill name |
+| slug | slug (source: name) | yes | — | UNKNOWN | URL slug |
+| category | string (options) | yes | — | UNKNOWN | backend/frontend/database/devops/architecture/seo/ai/mobile/other |
+| description | text (rows 2) | no | — | UNKNOWN | Short description |
+| icon | string | no | — | UNKNOWN | Icon identifier, e.g. Devicon class "devicon-nestjs-plain" |
+| order | number | no | 0 | UNKNOWN | Display order |
+| featured | boolean | no | false | UNKNOWN | Show on homepage skills section |
+
+## Relations
+
+- Referenced by: `project.technologies[]`, `experience.technologies[]`.
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "skill",
+  "name": "NestJS",
+  "slug": {"_type": "slug", "current": "nestjs"},
+  "category": "backend",
+  "description": "...",
+  "icon": "devicon-nestjs-plain",
+  "order": 0,
+  "featured": false
+}
+```
+
+## Response Shape
+
+Via `SKILL_FRAGMENT` (all skill projections):
+```json
+{"_id": "...", "name": "...", "slug": "...", "category": "backend", "icon": "...", "featured": false, "order": 0}
+```
+`GET_SKILLS` additionally returns `description`. `GET_FEATURED_SKILLS` filters
+`featured == true`.
+
+## API / Service Usage
+
+`GET_SKILLS`, `GET_FEATURED_SKILLS`; embedded via SKILL_FRAGMENT in
+`GET_PROJECTS`, `GET_FEATURED_PROJECTS`, `GET_PROJECT_BY_SLUG`,
+`GET_EXPERIENCE`. structure.ts: "Skills" under Taxonomy.
+
+## Enums
+
+category — SKILL_CATEGORIES: backend · frontend · database · devops ·
+architecture · seo · ai · mobile · other.
+
+## Validation Rules
+
+- Required: name, slug, category.
+
+## Notes
+
+- `icon` has no validation — free-form identifier consumed by the frontend.

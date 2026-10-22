@@ -1,0 +1,66 @@
+# Model: Service (document)
+
+## Purpose
+
+Service offering (`_type == "service"`). Groups: content (default), seo.
+Preview: title / slug. Ordering: Display Order.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| title | string | yes | — | UNKNOWN | Service title |
+| slug | slug (source: title) | yes | — | UNKNOWN | URL slug |
+| shortDescription | text (rows 2) | yes | — | UNKNOWN | Card summary; max 200 |
+| description | array (bodyField portable text) | no | — | UNKNOWN | Full description |
+| icon | string | no | — | UNKNOWN | Icon identifier or SVG string |
+| featured | boolean | no | false | UNKNOWN | Show on homepage |
+| order | number | no | 0 | UNKNOWN | Display order |
+| seo | seo (object) | no | — | UNKNOWN | Page SEO |
+
+## Relations
+
+Embeds `seo` object; no references.
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "service",
+  "title": "Backend Development",
+  "slug": {"_type": "slug", "current": "backend-development"},
+  "shortDescription": "max 200 chars",
+  "description": [{"_type": "block"}],
+  "icon": "api",
+  "featured": true,
+  "order": 0,
+  "seo": {"metaTitle": "..."}
+}
+```
+
+## Response Shape
+
+- `GET_SERVICES`: `_id, title, slug, shortDescription, icon, featured, order`
+  (ordered `order asc`).
+- `GET_SERVICE_BY_SLUG` (param `$slug`): list shape + `description` + `seo`
+  (SEO_FRAGMENT).
+- `GET_ALL_SERVICE_SLUGS`: `{"slug": "..."}`.
+
+See schema.txt for expanded projections.
+
+## API / Service Usage
+
+`GET_SERVICES`, `GET_SERVICE_BY_SLUG`, `GET_ALL_SERVICE_SLUGS`. structure.ts:
+"Services" under Content.
+
+## Enums
+
+None.
+
+## Validation Rules
+
+- Required: title, slug, shortDescription (max 200).
+
+## Notes
+
+- No image field on services; `icon` is frontend-rendered (identifier/SVG).
