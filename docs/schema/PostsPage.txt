@@ -1,0 +1,78 @@
+# Model: PostsPage (singleton document)
+
+## Purpose
+
+Singleton document for the /blog listing page (`_type == "postsPage"`).
+Groups: hero (default), SEO & Meta, Open Graph, Structured Data, Page
+Settings.
+ 
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| heading | string | yes | "Blog" | UNKNOWN | Page heading |
+| subheading | text (rows 2) | no | "Thoughts on backend engineering, architecture, and building products." | UNKNOWN | Hero subheading |
+| metaTitle | string | yes | "Blog — Hamza Elmouddane" | UNKNOWN | min 10, max 60 (warning) |
+| metaDescription | text | yes | "Articles on NestJS, FastAPI…" | UNKNOWN | min 50, max 160 (warning) |
+| canonicalUrl | url | no | — | UNKNOWN | http/https; auto-generated /blog/ if blank |
+| noIndex | boolean | no | false | UNKNOWN | Block indexing |
+| ogTitle | string | no | — | UNKNOWN | Falls back to metaTitle |
+| ogDescription | text | no | — | UNKNOWN | Falls back to metaDescription |
+| ogImage | image (hotspot) + alt | no | — | UNKNOWN | 1200×630 |
+| twitterCard | string (radio) | no | "summary_large_image" | UNKNOWN | summary_large_image · summary |
+| structuredDataName | string | no | "Blog — Hamza Elmouddane" | UNKNOWN | JSON-LD name |
+| structuredDataDescription | text | no | "A blog about backend engineering…" | UNKNOWN | JSON-LD description |
+| postsPerPage | number | no | 10 | UNKNOWN | min 1, max 50, integer |
+| showCategoryFilter | boolean | no | true | UNKNOWN | Show category filter UI |
+| showTagFilter | boolean | no | false | UNKNOWN | Show tag filter UI |
+| pinnedPosts | array of reference → post | no | — | UNKNOWN | Max 3, unique |
+| featuredPost | reference → post | no | — | UNKNOWN | Hero card post; blank = auto-use latest featured post |
+| newsletterCtaLabel | string | no | "Get new articles in your inbox" | UNKNOWN | Newsletter CTA label |
+| newsletterCtaSubtext | string | no | "No spam. Unsubscribe any time." | UNKNOWN | Newsletter CTA subtext |
+| jsonLd | text | no | — | UNKNOWN | JSON-LD; needs @sanity/code-input (not installed) |
+
+## Relations
+
+- postsPage → post[] (`pinnedPosts`, max 3, unique).
+- postsPage → post (`featuredPost`, single).
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "postsPage",
+  "heading": "Blog",
+  "metaTitle": "Blog — Hamza Elmouddane",
+  "postsPerPage": 10,
+  "showCategoryFilter": true,
+  "showTagFilter": false,
+  "pinnedPosts": [{"_type": "reference", "_ref": "postId"}],
+  "featuredPost": {"_type": "reference", "_ref": "postId"},
+  "twitterCard": "summary_large_image"
+}
+```
+
+## Response Shape
+
+No GROQ query exists for this type — frontend fetches the document directly.
+
+## API / Service Usage
+
+None in queries.ts. Not in structure.ts (inert file also omits it).
+
+## Enums
+
+- twitterCard: summary_large_image · summary (default summary_large_image).
+
+## Validation Rules
+
+- Required: heading, metaTitle (min 10/max 60 warning), metaDescription
+  (min 50/max 160 warning).
+- canonicalUrl: uri http/https.
+- postsPerPage: min 1, max 50, integer.
+- pinnedPosts: max 3, unique.
+
+## Notes
+
+- Flattened meta fields (no `seo` object), same as projectsPage.
+- `jsonLd` free-text field; plugin not installed.

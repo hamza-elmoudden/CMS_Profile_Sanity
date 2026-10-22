@@ -1,0 +1,91 @@
+# Model: Post (document)
+
+## Purpose
+
+Blog post (`_type == "post"`). Groups: content (default), meta & relations,
+seo. Preview: title + localized publishedAt date ("Draft" when unset).
+Ordering: Published — Newest First.
+
+## Fields
+
+| Field | Type | Required | Default | Nullable | Description |
+|---|---|---|---|---|---|
+| title | string | yes | — | UNKNOWN | Post title |
+| slug | slug (source: title) | yes | — | UNKNOWN | URL slug |
+| excerpt | text (rows 3) | no | — | UNKNOWN | Card/RSS summary; max 300 |
+| coverImage | image (hotspot) + alt (req) + caption | no | — | UNKNOWN | Cover image |
+| body | array (bodyField portable text) | no | — | UNKNOWN | Article body |
+| author | reference → author | yes | — | UNKNOWN | Post author |
+| category | reference → category | no | — | UNKNOWN | Post category |
+| tags | array of reference → tag | no | — | UNKNOWN | Tags |
+| relatedPosts | array of reference → post | no | — | UNKNOWN | Self-references; max 4 |
+| featured | boolean | no | false | UNKNOWN | Pin to top of blog listing |
+| jsonLd | text | no | — | UNKNOWN | JSON-LD; needs @sanity/code-input (not installed) |
+| publishedAt | datetime | warning only | — | UNKNOWN | Warning "Consider setting a publish date" if empty |
+| updatedAt | datetime | no | — | UNKNOWN | Last updated |
+| seo | seo (object) | no | — | UNKNOWN | Page SEO |
+
+## Relations
+
+- post → author (required, many posts : one author).
+- post → category (many : one).
+- post → tag[] (many : many).
+- post → post[] (`relatedPosts`, self-reference, max 4).
+- Referenced by: `category` postCount (computed GROQ), `postsPage.pinnedPosts[]`,
+  `postsPage.featuredPost`.
+
+## Input / Request Shape
+
+```json
+{
+  "_type": "post",
+  "title": "...",
+  "slug": {"_type": "slug", "current": "..."},
+  "excerpt": "max 300 chars",
+  "coverImage": {"asset": {"_ref": "image-..."}, "alt": "..."},
+  "body": [{"_type": "block"}],
+  "author": {"_type": "reference", "_ref": "authorId"},
+  "category": {"_type": "reference", "_ref": "categoryId"},
+  "tags": [{"_type": "reference", "_ref": "tagId"}],
+  "relatedPosts": [{"_type": "reference", "_ref": "postId"}],
+  "featured": false,
+  "jsonLd": "...",
+  "publishedAt": "2025-01-01T00:00:00Z",
+  "updatedAt": "2025-06-01T00:00:00Z",
+  "seo": {"metaTitle": "..."}
+}
+```
+
+## Response Shape
+
+- `GET_POSTS`: `_id, title, slug, excerpt, coverImage{IMAGE_FRAGMENT}, publishedAt, featured, author->{name,slug,image}, category->{title,slug}, tags[]->{title,slug}` — ordered `publishedAt desc`.
+- `GET_FEATURED_POSTS`: `featured == true`, first 3, subset of fields.
+- `GET_POST_BY_SLUG` (param `$slug`): full shape incl. raw `body`,
+  `author->{..., role, bio, socialLinks}`, `relatedPosts[]->{...}`, `seo`.
+- `GET_ALL_POST_SLUGS`: `{"slug": "..."}`.
+
+See schema.txt for fully expanded projections.
+
+## API / Service Usage
+
+`GET_POSTS`, `GET_FEATURED_POSTS`, `GET_POST_BY_SLUG` (`$slug`),
+`GET_ALL_POST_SLUGS`, `GET_POSTS_BY_CATEGORY` (`$categorySlug`).
+structure.ts: "Posts" under Blog.
+
+## Enums
+
+None.
+
+## Validation Rules
+
+- Required: title, slug, author.
+- excerpt max 300.
+- relatedPosts max 4 (no unique rule).
+- coverImage.alt required when image present.
+- publishedAt: warning only, not an error.
+
+## Notes
+
+- `jsonLd` free-text field; plugin for code editing not installed.
+- featured flag feeds both GET_FEATURED_POSTS (homepage/blog, max 3) and
+  postsPage auto-featured post.
