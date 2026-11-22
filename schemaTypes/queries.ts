@@ -73,6 +73,31 @@ export const GET_ABOUT_PAGE = /* groq */ `
   }
 `;
 
+// ─── Projects Page (listing page singleton) ──────────────────────────────────
+// `heading` is the page's visible <h1>. SEO fields are top-level on this type,
+// not nested under `seo`, so SEO_FRAGMENT doesn't apply.
+
+export const GET_PROJECTS_PAGE = /* groq */ `
+  *[_type == "projectsPage"][0] {
+    heading,
+    subheading,
+    metaTitle,
+    metaDescription,
+    canonicalUrl,
+    noIndex,
+    ogTitle,
+    ogDescription,
+    ogImage { asset->{ url }, alt },
+    twitterCard,
+    structuredDataName,
+    structuredDataDescription,
+    projectsPerPage,
+    showFilters,
+    filterLabels,
+    "pinnedProjects": pinnedProjects[]->_id
+  }
+`;
+
 // ─── Projects ────────────────────────────────────────────────────────────────
 
 export const GET_PROJECTS = /* groq */ `
@@ -160,6 +185,34 @@ export const GET_SERVICE_BY_SLUG = /* groq */ `
 
 export const GET_ALL_SERVICE_SLUGS = /* groq */ `
   *[_type == "service"] { "slug": slug.current }
+`;
+
+// ─── Posts Page (blog listing page singleton) ────────────────────────────────
+// `heading` is the page's visible <h1>. SEO fields are top-level on this type,
+// not nested under `seo`, so SEO_FRAGMENT doesn't apply.
+
+export const GET_POSTS_PAGE = /* groq */ `
+  *[_type == "postsPage"][0] {
+    heading,
+    subheading,
+    metaTitle,
+    metaDescription,
+    canonicalUrl,
+    noIndex,
+    ogTitle,
+    ogDescription,
+    ogImage { asset->{ url }, alt },
+    twitterCard,
+    structuredDataName,
+    structuredDataDescription,
+    postsPerPage,
+    showCategoryFilter,
+    showTagFilter,
+    "pinnedPosts": pinnedPosts[]->_id,
+    "featuredPost": featuredPost->_id,
+    newsletterCtaLabel,
+    newsletterCtaSubtext
+  }
 `;
 
 // ─── Blog Posts ───────────────────────────────────────────────────────────────
