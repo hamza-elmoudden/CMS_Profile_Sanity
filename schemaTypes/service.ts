@@ -49,6 +49,15 @@ export const service = defineType({
         "Icon identifier or SVG string. Example: 'nestjs', 'backend', 'api'",
     }),
     defineField({
+      name: "relatedProjects",
+      title: "Related Projects",
+      type: "array",
+      group: "content",
+      description: "Projects linked from this service page (internal linking).",
+      of: [{ type: "reference", to: [{ type: "project" }] }],
+      validation: (Rule) => Rule.unique(),
+    }),
+    defineField({
       name: "featured",
       title: "Featured",
       type: "boolean",

@@ -47,6 +47,8 @@ export const siteSettings = defineType({
           name: "alt",
           title: "Alt Text",
           type: "string",
+          description: "Required: used as the image alt text and og:image:alt.",
+          validation: (Rule) => Rule.required(),
         }),
       ],
     }),
@@ -64,6 +66,15 @@ export const siteSettings = defineType({
       description:
         "Fallback image used when a page has no custom OG image. Recommended: 1200×630px",
       options: { hotspot: true },
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          description: "Required: used as the image alt text and og:image:alt.",
+          validation: (Rule) => Rule.required(),
+        }),
+      ],
     }),
     defineField({
       name: "email",

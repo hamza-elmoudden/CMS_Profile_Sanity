@@ -179,6 +179,7 @@ export const GET_SERVICE_BY_SLUG = /* groq */ `
     shortDescription,
     description,
     icon,
+    "relatedProjectSlugs": relatedProjects[]->slug.current,
     ${SEO_FRAGMENT}
   }
 `;

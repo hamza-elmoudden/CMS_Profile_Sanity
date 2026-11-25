@@ -130,6 +130,7 @@ export const projectsPage = defineType({
           title: "Alt Text",
           type: "string",
           description: "Describe the image for accessibility and social cards.",
+          validation: (Rule) => Rule.required(),
         }),
       ],
     }),

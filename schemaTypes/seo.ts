@@ -68,6 +68,8 @@ export const seo = defineType({
           name: "alt",
           title: "Alt Text",
           type: "string",
+          description: "Required: used as the image alt text and og:image:alt.",
+          validation: (Rule) => Rule.required(),
         }),
       ],
     }),
